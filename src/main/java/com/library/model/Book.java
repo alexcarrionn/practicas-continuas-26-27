@@ -26,37 +26,37 @@ import lombok.Setter;
 @Builder
 public class Book {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotBlank
-    @Size(max = 255)
-    @Column(nullable = false, length = 255)
-    private String title;
+  @NotBlank
+  @Size(max = 255)
+  @Column(nullable = false, length = 255)
+  private String title;
 
-    @NotBlank
-    @Size(max = 255)
-    @Column(nullable = false, length = 255)
-    private String author;
+  @NotBlank
+  @Size(max = 255)
+  @Column(nullable = false, length = 255)
+  private String author;
 
-    @NotBlank
-    @Size(max = 100)
-    @Column(nullable = false, length = 100)
-    private String genre;
+  @NotBlank
+  @Size(max = 100)
+  @Column(nullable = false, length = 100)
+  private String genre;
 
-    @Pattern(regexp = "^(?:\\d{10}|\\d{13})$")
-    @Size(max = 20)
-    @Column(length = 20, unique = true)
-    private String isbn;
+  @Pattern(regexp = "^(?:\\d{10}|\\d{13})$")
+  @Size(max = 20)
+  @Column(length = 20, unique = true)
+  private String isbn;
 
-    @Min(1450)
-    @Max(2100)
-    @Column(name = "published_year")
-    private Integer publishedYear;
+  @Min(1450)
+  @Max(2100)
+  @Column(name = "published_year")
+  private Integer publishedYear;
 
-    @Min(1)
-    @Max(10000)
-    @Column
-    private Integer pages;
+  @Min(1)
+  @Max(10000)
+  @Column
+  private Integer pages;
 }

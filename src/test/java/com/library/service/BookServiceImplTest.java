@@ -1,29 +1,5 @@
 package com.library.service;
 
-import com.library.dto.BookRequest;
-import com.library.dto.BookResponse;
-import com.library.dto.BookSearchCriteria;
-import com.library.dto.BookSearchResponse;
-import com.library.exception.BookNotFoundException;
-import com.library.exception.DuplicateBookException;
-import com.library.exception.InvalidBookException;
-import com.library.mapper.BookMapper;
-import com.library.model.Book;
-import com.library.repository.BookRepository;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-
-import java.time.Year;
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,188 +11,238 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.library.dto.BookRequest;
+import com.library.dto.BookResponse;
+import com.library.dto.BookSearchCriteria;
+import com.library.dto.BookSearchResponse;
+import com.library.exception.BookNotFoundException;
+import com.library.exception.DuplicateBookException;
+import com.library.exception.InvalidBookException;
+import com.library.mapper.BookMapper;
+import com.library.model.Book;
+import com.library.repository.BookRepository;
+import java.time.Year;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 @ExtendWith(MockitoExtension.class)
 class BookServiceImplTest {
 
-    @Mock
-    private BookRepository bookRepository;
+  @Mock private BookRepository bookRepository;
 
-    @Mock
-    private BookMapper bookMapper;
+  @Mock private BookMapper bookMapper;
 
-    @InjectMocks
-    private BookServiceImpl bookService;
+  @InjectMocks private BookServiceImpl bookService;
 
-    @Test
-    void create_withExistingIsbn_rejectsDuplicateAndDoesNotSave() {
-        BookRequest request = validRequest("9780451524935");
-        when(bookRepository.existsByIsbn(request.isbn())).thenReturn(true);
+  @Test
+  void create_withExistingIsbn_rejectsDuplicateAndDoesNotSave() {
+    BookRequest request = validRequest("9780451524935");
+    when(bookRepository.existsByIsbn(request.isbn())).thenReturn(true);
 
-        assertThrows(DuplicateBookException.class, () -> bookService.create(request));
-        verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any());
-        verifyNoInteractions(bookMapper);
-    }
+    assertThrows(DuplicateBookException.class, () -> bookService.create(request));
+    verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    verifyNoInteractions(bookMapper);
+  }
 
-    @Test
-    void create_withFuturePublicationYear_rejectsBook() {
-        BookRequest request = new BookRequest("Dune", "Frank Herbert", "Ciencia ficción",
-                "9780441013593", Year.now().getValue() + 1, 500);
+  @Test
+  void create_withFuturePublicationYear_rejectsBook() {
+    BookRequest request =
+        new BookRequest(
+            "Dune",
+            "Frank Herbert",
+            "Ciencia ficción",
+            "9780441013593",
+            Year.now().getValue() + 1,
+            500);
 
-        assertThrows(InvalidBookException.class, () -> bookService.create(request));
-        verifyNoInteractions(bookRepository, bookMapper);
-    }
+    assertThrows(InvalidBookException.class, () -> bookService.create(request));
+    verifyNoInteractions(bookRepository, bookMapper);
+  }
 
-    @Test
-    void update_withIsbnBelongingToAnotherBook_rejectsDuplicate() {
-        Book existing = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
-        BookRequest request = validRequest("9780441013593");
+  @Test
+  void update_withIsbnBelongingToAnotherBook_rejectsDuplicate() {
+    Book existing = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+    BookRequest request = validRequest("9780441013593");
 
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.existsByIsbnAndIdNot(request.isbn(), 1L)).thenReturn(true);
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
+    when(bookRepository.existsByIsbnAndIdNot(request.isbn(), 1L)).thenReturn(true);
 
-        assertThrows(DuplicateBookException.class, () -> bookService.update(1L, request));
-        verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any());
-    }
+    assertThrows(DuplicateBookException.class, () -> bookService.update(1L, request));
+    verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any());
+  }
 
-    @Test
-    void update_withSameIsbn_isAllowedAndPersistsChanges() {
-        Book existing = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
-        BookRequest request = new BookRequest("Mil novecientos ochenta y cuatro", "George Orwell",
-                "Distopía", "9780451524935", 1949, 350);
-        BookResponse response = new BookResponse(1L, "Mil novecientos ochenta y cuatro", "George Orwell",
-                "Distopía", "9780451524935", 1949, 350);
+  @Test
+  void update_withSameIsbn_isAllowedAndPersistsChanges() {
+    Book existing = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+    BookRequest request =
+        new BookRequest(
+            "Mil novecientos ochenta y cuatro",
+            "George Orwell",
+            "Distopía",
+            "9780451524935",
+            1949,
+            350);
+    BookResponse response =
+        new BookResponse(
+            1L,
+            "Mil novecientos ochenta y cuatro",
+            "George Orwell",
+            "Distopía",
+            "9780451524935",
+            1949,
+            350);
 
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.existsByIsbnAndIdNot(request.isbn(), 1L)).thenReturn(false);
-        when(bookRepository.save(existing)).thenReturn(existing);
-        when(bookMapper.toResponse(existing)).thenReturn(response);
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
+    when(bookRepository.existsByIsbnAndIdNot(request.isbn(), 1L)).thenReturn(false);
+    when(bookRepository.save(existing)).thenReturn(existing);
+    when(bookMapper.toResponse(existing)).thenReturn(response);
 
-        assertEquals(response, bookService.update(1L, request));
-        assertEquals(350, existing.getPages());
-        verify(bookRepository).save(existing);
-    }
+    assertEquals(response, bookService.update(1L, request));
+    assertEquals(350, existing.getPages());
+    verify(bookRepository).save(existing);
+  }
 
-    @Test
-    void findById_withMissingBook_throwsNotFound() {
-        when(bookRepository.findById(99L)).thenReturn(Optional.empty());
+  @Test
+  void findById_withMissingBook_throwsNotFound() {
+    when(bookRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(BookNotFoundException.class, () -> bookService.findById(99L));
-    }
+    assertThrows(BookNotFoundException.class, () -> bookService.findById(99L));
+  }
 
-    @Test
-    void update_withMissingBook_throwsNotFoundAndDoesNotSave() {
-        when(bookRepository.findById(99L)).thenReturn(Optional.empty());
+  @Test
+  void update_withMissingBook_throwsNotFoundAndDoesNotSave() {
+    when(bookRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(BookNotFoundException.class,
-                () -> bookService.update(99L, validRequest(null)));
-        verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any());
-    }
+    assertThrows(BookNotFoundException.class, () -> bookService.update(99L, validRequest(null)));
+    verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any());
+  }
 
-    @Test
-    void delete_withMissingBook_throwsNotFoundAndDoesNotDelete() {
-        when(bookRepository.existsById(99L)).thenReturn(false);
+  @Test
+  void delete_withMissingBook_throwsNotFoundAndDoesNotDelete() {
+    when(bookRepository.existsById(99L)).thenReturn(false);
 
-        assertThrows(BookNotFoundException.class, () -> bookService.delete(99L));
-        verify(bookRepository, never()).deleteById(99L);
-    }
+    assertThrows(BookNotFoundException.class, () -> bookService.delete(99L));
+    verify(bookRepository, never()).deleteById(99L);
+  }
 
-    @Test
-    void delete_withExistingBook_removesIt() {
-        when(bookRepository.existsById(7L)).thenReturn(true);
+  @Test
+  void delete_withExistingBook_removesIt() {
+    when(bookRepository.existsById(7L)).thenReturn(true);
 
-        bookService.delete(7L);
+    bookService.delete(7L);
 
-        verify(bookRepository).deleteById(7L);
-    }
+    verify(bookRepository).deleteById(7L);
+  }
 
-    @Test
-    void search_appliesFiltersPaginationAndMapsResults() {
-        Book book = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
-        BookResponse response = new BookResponse(1L, "1984", "George Orwell", "Distopía",
-                "9780451524935", 1949, 328);
-        BookSearchCriteria criteria = new BookSearchCriteria(" orwell ", " George ", " Distopía ", 1900, 2000);
+  @Test
+  void search_appliesFiltersPaginationAndMapsResults() {
+    Book book = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+    BookResponse response =
+        new BookResponse(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+    BookSearchCriteria criteria =
+        new BookSearchCriteria(" orwell ", " George ", " Distopía ", 1900, 2000);
 
-        when(bookRepository.search(eq("orwell"), eq("George"), eq("Distopía"), eq(1900), eq(2000), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(
-                        List.of(book),
-                        PageRequest.of(2, 10, Sort.by(Sort.Direction.DESC, "pages")),
-                        30
-                ));
-        when(bookMapper.toResponse(book)).thenReturn(response);
+    when(bookRepository.search(
+            eq("orwell"), eq("George"), eq("Distopía"), eq(1900), eq(2000), any(Pageable.class)))
+        .thenReturn(
+            new PageImpl<>(
+                List.of(book), PageRequest.of(2, 10, Sort.by(Sort.Direction.DESC, "pages")), 30));
+    when(bookMapper.toResponse(book)).thenReturn(response);
 
-        BookSearchResponse result = bookService.search(criteria, 2, 10, "pages,desc");
+    BookSearchResponse result = bookService.search(criteria, 2, 10, "pages,desc");
 
-        assertEquals(30, result.totalElements());
-        assertEquals(response, result.content().getFirst());
-        assertEquals(2, result.page());
-        assertEquals(10, result.size());
-        assertEquals(3, result.totalPages());
-        assertFalse(result.first());
-        assertTrue(result.last());
+    assertEquals(30, result.totalElements());
+    assertEquals(response, result.content().getFirst());
+    assertEquals(2, result.page());
+    assertEquals(10, result.size());
+    assertEquals(3, result.totalPages());
+    assertFalse(result.first());
+    assertTrue(result.last());
 
-        org.mockito.ArgumentCaptor<Pageable> pageableCaptor =
-                org.mockito.ArgumentCaptor.forClass(Pageable.class);
-        verify(bookRepository).search(eq("orwell"), eq("George"), eq("Distopía"), eq(1900), eq(2000), pageableCaptor.capture());
-        Pageable pageable = pageableCaptor.getValue();
-        assertEquals(2, pageable.getPageNumber());
-        assertEquals(10, pageable.getPageSize());
-        assertEquals("pages: DESC", pageable.getSort().toString());
-    }
+    org.mockito.ArgumentCaptor<Pageable> pageableCaptor =
+        org.mockito.ArgumentCaptor.forClass(Pageable.class);
+    verify(bookRepository)
+        .search(
+            eq("orwell"),
+            eq("George"),
+            eq("Distopía"),
+            eq(1900),
+            eq(2000),
+            pageableCaptor.capture());
+    Pageable pageable = pageableCaptor.getValue();
+    assertEquals(2, pageable.getPageNumber());
+    assertEquals(10, pageable.getPageSize());
+    assertEquals("pages: DESC", pageable.getSort().toString());
+  }
 
-    @Test
-    void search_withBlankFiltersUsesNullAndDefaultSort() {
-        BookSearchCriteria criteria = new BookSearchCriteria("  ", "", "   ", null, null);
-        when(bookRepository.search(eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+  @Test
+  void search_withBlankFiltersUsesNullAndDefaultSort() {
+    BookSearchCriteria criteria = new BookSearchCriteria("  ", "", "   ", null, null);
+    when(bookRepository.search(
+            eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of()));
 
-        bookService.search(criteria, 0, 20, "");
+    bookService.search(criteria, 0, 20, "");
 
-        org.mockito.ArgumentCaptor<Pageable> pageableCaptor =
-                org.mockito.ArgumentCaptor.forClass(Pageable.class);
-        verify(bookRepository).search(eq(null), eq(null), eq(null), eq(null), eq(null), pageableCaptor.capture());
-        assertEquals("title: ASC", pageableCaptor.getValue().getSort().toString());
-    }
+    org.mockito.ArgumentCaptor<Pageable> pageableCaptor =
+        org.mockito.ArgumentCaptor.forClass(Pageable.class);
+    verify(bookRepository)
+        .search(eq(null), eq(null), eq(null), eq(null), eq(null), pageableCaptor.capture());
+    assertEquals("title: ASC", pageableCaptor.getValue().getSort().toString());
+  }
 
-    @Test
-    void search_withInvalidYearRange_rejectsRequestWithoutQuery() {
-        BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, 2020, 2010);
+  @Test
+  void search_withInvalidYearRange_rejectsRequestWithoutQuery() {
+    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, 2020, 2010);
 
-        assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "title,asc"));
+    assertThrows(
+        InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "title,asc"));
 
-        verifyNoInteractions(bookRepository, bookMapper);
-    }
+    verifyNoInteractions(bookRepository, bookMapper);
+  }
 
-    @Test
-    void search_withUnsupportedSort_rejectsRequestWithoutQuery() {
-        BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
+  @Test
+  void search_withUnsupportedSort_rejectsRequestWithoutQuery() {
+    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
 
-        assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "isbn,asc"));
+    assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "isbn,asc"));
 
-        verifyNoInteractions(bookRepository, bookMapper);
-    }
+    verifyNoInteractions(bookRepository, bookMapper);
+  }
 
-    @Test
-    void search_withOversizedPage_rejectsRequestWithoutQuery() {
-        BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
+  @Test
+  void search_withOversizedPage_rejectsRequestWithoutQuery() {
+    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
 
-        assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 101, "title,asc"));
+    assertThrows(
+        InvalidBookException.class, () -> bookService.search(criteria, 0, 101, "title,asc"));
 
-        verify(bookRepository, never()).search(any(), any(), any(), any(), any(), any());
-    }
+    verify(bookRepository, never()).search(any(), any(), any(), any(), any(), any());
+  }
 
-    private static BookRequest validRequest(String isbn) {
-        return new BookRequest("1984", "George Orwell", "Distopía", isbn, 1949, 328);
-    }
+  private static BookRequest validRequest(String isbn) {
+    return new BookRequest("1984", "George Orwell", "Distopía", isbn, 1949, 328);
+  }
 
-    private static Book book(Long id, String title, String author, String genre, String isbn, int year, int pages) {
-        return Book.builder()
-                .id(id)
-                .title(title)
-                .author(author)
-                .genre(genre)
-                .isbn(isbn)
-                .publishedYear(year)
-                .pages(pages)
-                .build();
-    }
+  private static Book book(
+      Long id, String title, String author, String genre, String isbn, int year, int pages) {
+    return Book.builder()
+        .id(id)
+        .title(title)
+        .author(author)
+        .genre(genre)
+        .isbn(isbn)
+        .publishedYear(year)
+        .pages(pages)
+        .build();
+  }
 }
