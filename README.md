@@ -77,7 +77,7 @@ Además del CRUD existente, la API incorpora un endpoint de búsqueda paginada:
 
 - `GET /api/books/search`
 - filtros opcionales: `keyword`, `author`, `genre`, `minYear` y `maxYear`;
-- paginación mediante `page` y `size` (máximo 100 resultados por página);
+- paginación mediante `page` y `size` solamente 100 resultados por página (máximo);
 - ordenación mediante `sort`, por ejemplo `title,asc`, `author,desc` o `publishedYear,desc`.
 
 Los filtros de texto no distinguen entre mayúsculas y minúsculas y se pueden combinar. El servicio valida el rango de años, el tamaño de página y los campos de ordenación permitidos antes de consultar el repositorio.
