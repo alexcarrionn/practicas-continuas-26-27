@@ -83,3 +83,10 @@ Además del CRUD existente, la API incorpora un endpoint de búsqueda paginada:
 Los filtros de texto no distinguen entre mayúsculas y minúsculas y se pueden combinar. El servicio valida el rango de años, el tamaño de página y los campos de ordenación permitidos antes de consultar el repositorio.
 
 La respuesta de búsqueda usa un DTO propio para mantener estable el contrato JSON y no exponer directamente la estructura interna de `PageImpl` de Spring Data.
+
+## Hooks
+
+Para que lance el hook de formateo automático debes ejecutar el siguiente comando:
+```bash
+git config core.hooksPath .githooks
+```
