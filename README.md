@@ -68,3 +68,18 @@ java -jar target/book-library.jar
 ```
 
 La aplicación utiliza H2 en memoria y crea el esquema automáticamente al arrancar.
+
+La ampliación añade 5 tests unitarios al conjunto existente.
+
+## Búsqueda avanzada
+
+Además del CRUD existente, la API incorpora un endpoint de búsqueda paginada:
+
+- `GET /api/books/search`
+- filtros opcionales: `keyword`, `author`, `genre`, `minYear` y `maxYear`;
+- paginación mediante `page` y `size` (máximo 100 resultados por página);
+- ordenación mediante `sort`, por ejemplo `title,asc`, `author,desc` o `publishedYear,desc`.
+
+Los filtros de texto no distinguen entre mayúsculas y minúsculas y se pueden combinar. El servicio valida el rango de años, el tamaño de página y los campos de ordenación permitidos antes de consultar el repositorio.
+
+La respuesta de búsqueda usa un DTO propio para mantener estable el contrato JSON y no exponer directamente la estructura interna de `PageImpl` de Spring Data.

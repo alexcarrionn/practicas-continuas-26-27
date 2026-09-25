@@ -18,3 +18,10 @@ java -jar target/book-library.jar
 ```
 
 Este repositorio no incluye tests de integración ni depende de una base de datos externa para ejecutar la aplicación: usa H2 en memoria.
+
+## Funcionalidad añadida
+
+| Requisito | Implementación | Evidencia |
+|---|---|---|
+| Búsqueda avanzada paginada | Filtros combinables por palabra clave, autor, género y rango de años, con paginación y ordenación validada | `BookController`, `BookServiceImpl`, `BookRepository`, `BookSearchCriteria` y `BookSearchResponse` |
+| Contrato de paginación estable | DTO específico para no exponer directamente `PageImpl` | `src/main/java/com/library/dto/BookSearchResponse.java` |

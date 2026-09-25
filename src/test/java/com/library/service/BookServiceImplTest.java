@@ -2,6 +2,8 @@ package com.library.service;
 
 import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
+import com.library.dto.BookSearchCriteria;
+import com.library.dto.BookSearchResponse;
 import com.library.exception.BookNotFoundException;
 import com.library.exception.DuplicateBookException;
 import com.library.exception.InvalidBookException;
@@ -13,12 +15,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.Year;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -116,6 +127,81 @@ class BookServiceImplTest {
         bookService.delete(7L);
 
         verify(bookRepository).deleteById(7L);
+    }
+
+    @Test
+    void search_appliesFiltersPaginationAndMapsResults() {
+        Book book = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+        BookResponse response = new BookResponse(1L, "1984", "George Orwell", "Distopía",
+                "9780451524935", 1949, 328);
+        BookSearchCriteria criteria = new BookSearchCriteria(" orwell ", " George ", " Distopía ", 1900, 2000);
+
+        when(bookRepository.search(eq("orwell"), eq("George"), eq("Distopía"), eq(1900), eq(2000), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(
+                        List.of(book),
+                        PageRequest.of(2, 10, Sort.by(Sort.Direction.DESC, "pages")),
+                        30
+                ));
+        when(bookMapper.toResponse(book)).thenReturn(response);
+
+        BookSearchResponse result = bookService.search(criteria, 2, 10, "pages,desc");
+
+        assertEquals(30, result.totalElements());
+        assertEquals(response, result.content().getFirst());
+        assertEquals(2, result.page());
+        assertEquals(10, result.size());
+        assertEquals(3, result.totalPages());
+        assertFalse(result.first());
+        assertTrue(result.last());
+
+        org.mockito.ArgumentCaptor<Pageable> pageableCaptor =
+                org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(bookRepository).search(eq("orwell"), eq("George"), eq("Distopía"), eq(1900), eq(2000), pageableCaptor.capture());
+        Pageable pageable = pageableCaptor.getValue();
+        assertEquals(2, pageable.getPageNumber());
+        assertEquals(10, pageable.getPageSize());
+        assertEquals("pages: DESC", pageable.getSort().toString());
+    }
+
+    @Test
+    void search_withBlankFiltersUsesNullAndDefaultSort() {
+        BookSearchCriteria criteria = new BookSearchCriteria("  ", "", "   ", null, null);
+        when(bookRepository.search(eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        bookService.search(criteria, 0, 20, "");
+
+        org.mockito.ArgumentCaptor<Pageable> pageableCaptor =
+                org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(bookRepository).search(eq(null), eq(null), eq(null), eq(null), eq(null), pageableCaptor.capture());
+        assertEquals("title: ASC", pageableCaptor.getValue().getSort().toString());
+    }
+
+    @Test
+    void search_withInvalidYearRange_rejectsRequestWithoutQuery() {
+        BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, 2020, 2010);
+
+        assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "title,asc"));
+
+        verifyNoInteractions(bookRepository, bookMapper);
+    }
+
+    @Test
+    void search_withUnsupportedSort_rejectsRequestWithoutQuery() {
+        BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
+
+        assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "isbn,asc"));
+
+        verifyNoInteractions(bookRepository, bookMapper);
+    }
+
+    @Test
+    void search_withOversizedPage_rejectsRequestWithoutQuery() {
+        BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
+
+        assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 101, "title,asc"));
+
+        verify(bookRepository, never()).search(any(), any(), any(), any(), any(), any());
     }
 
     private static BookRequest validRequest(String isbn) {

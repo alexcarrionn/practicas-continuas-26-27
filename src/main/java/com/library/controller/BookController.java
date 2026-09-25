@@ -2,6 +2,8 @@ package com.library.controller;
 
 import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
+import com.library.dto.BookSearchCriteria;
+import com.library.dto.BookSearchResponse;
 import com.library.service.BookService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -35,6 +38,21 @@ public class BookController {
     @GetMapping
     public ResponseEntity<List<BookResponse>> findAll() {
         return ResponseEntity.ok(bookService.findAll());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<BookSearchResponse> search(
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "author", required = false) String author,
+            @RequestParam(name = "genre", required = false) String genre,
+            @RequestParam(name = "minYear", required = false) Integer minYear,
+            @RequestParam(name = "maxYear", required = false) Integer maxYear,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sort", defaultValue = "title,asc") String sort) {
+
+        BookSearchCriteria criteria = new BookSearchCriteria(keyword, author, genre, minYear, maxYear);
+        return ResponseEntity.ok(bookService.search(criteria, page, size, sort));
     }
 
     @GetMapping("/{id}")
