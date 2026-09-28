@@ -87,6 +87,7 @@ public class BookServiceImpl implements BookService {
                 normalize(criteria.genre()),
                 criteria.minYear(),
                 criteria.maxYear(),
+                criteria.available(),
                 pageable)
             .map(bookMapper::toResponse);
 

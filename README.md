@@ -76,7 +76,7 @@ La ampliación añade 5 tests unitarios al conjunto existente.
 Además del CRUD existente, la API incorpora un endpoint de búsqueda paginada:
 
 - `GET /api/books/search`
-- filtros opcionales: `keyword`, `author`, `genre`, `minYear` y `maxYear`;
+- filtros opcionales: `keyword`, `author`, `genre`, `minYear`, `maxYear` y `available` (`true` devuelve los libros con ejemplares disponibles y `false` los que no tienen ninguno);
 - paginación mediante `page` y `size` solamente 100 resultados por página (máximo);
 - ordenación mediante `sort`, por ejemplo `title,asc`, `author,desc` o `publishedYear,desc`.
 

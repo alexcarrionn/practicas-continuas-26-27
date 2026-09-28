@@ -25,6 +25,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
                 or lower(b.genre) like lower(concat('%', :genre, '%')))
               and (:minYear is null or b.publishedYear >= :minYear)
               and (:maxYear is null or b.publishedYear <= :maxYear)
+              and (:available is null
+                or (:available = true and b.availableCopies > 0)
+                or (:available = false and b.availableCopies = 0))
             """)
   Page<Book> search(
       @Param("keyword") String keyword,
@@ -32,5 +35,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
       @Param("genre") String genre,
       @Param("minYear") Integer minYear,
       @Param("maxYear") Integer maxYear,
+      @Param("available") Boolean available,
       Pageable pageable);
 }

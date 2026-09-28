@@ -199,10 +199,16 @@ class BookServiceImplTest {
     BookResponse response =
         new BookResponse(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328, 1, 1);
     BookSearchCriteria criteria =
-        new BookSearchCriteria(" orwell ", " George ", " Distopía ", 1900, 2000);
+        new BookSearchCriteria(" orwell ", " George ", " Distopía ", 1900, 2000, null);
 
     when(bookRepository.search(
-            eq("orwell"), eq("George"), eq("Distopía"), eq(1900), eq(2000), any(Pageable.class)))
+            eq("orwell"),
+            eq("George"),
+            eq("Distopía"),
+            eq(1900),
+            eq(2000),
+            eq(null),
+            any(Pageable.class)))
         .thenReturn(
             new PageImpl<>(
                 List.of(book), PageRequest.of(2, 10, Sort.by(Sort.Direction.DESC, "pages")), 30));
@@ -227,6 +233,7 @@ class BookServiceImplTest {
             eq("Distopía"),
             eq(1900),
             eq(2000),
+            eq(null),
             pageableCaptor.capture());
     Pageable pageable = pageableCaptor.getValue();
     assertEquals(2, pageable.getPageNumber());
@@ -236,9 +243,9 @@ class BookServiceImplTest {
 
   @Test
   void search_withBlankFiltersUsesNullAndDefaultSort() {
-    BookSearchCriteria criteria = new BookSearchCriteria("  ", "", "   ", null, null);
+    BookSearchCriteria criteria = new BookSearchCriteria("  ", "", "   ", null, null, null);
     when(bookRepository.search(
-            eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
+            eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of()));
 
     bookService.search(criteria, 0, 20, "");
@@ -246,13 +253,27 @@ class BookServiceImplTest {
     org.mockito.ArgumentCaptor<Pageable> pageableCaptor =
         org.mockito.ArgumentCaptor.forClass(Pageable.class);
     verify(bookRepository)
-        .search(eq(null), eq(null), eq(null), eq(null), eq(null), pageableCaptor.capture());
+        .search(
+            eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), pageableCaptor.capture());
     assertEquals("title: ASC", pageableCaptor.getValue().getSort().toString());
   }
 
   @Test
+  void search_withAvailableFilter_passesItToRepository() {
+    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null, true);
+    when(bookRepository.search(
+            eq(null), eq(null), eq(null), eq(null), eq(null), eq(true), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of()));
+
+    bookService.search(criteria, 0, 20, "title,asc");
+
+    verify(bookRepository)
+        .search(eq(null), eq(null), eq(null), eq(null), eq(null), eq(true), any(Pageable.class));
+  }
+
+  @Test
   void search_withInvalidYearRange_rejectsRequestWithoutQuery() {
-    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, 2020, 2010);
+    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, 2020, 2010, null);
 
     assertThrows(
         InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "title,asc"));
@@ -262,7 +283,7 @@ class BookServiceImplTest {
 
   @Test
   void search_withUnsupportedSort_rejectsRequestWithoutQuery() {
-    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
+    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null, null);
 
     assertThrows(InvalidBookException.class, () -> bookService.search(criteria, 0, 20, "isbn,asc"));
 
@@ -271,12 +292,12 @@ class BookServiceImplTest {
 
   @Test
   void search_withOversizedPage_rejectsRequestWithoutQuery() {
-    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null);
+    BookSearchCriteria criteria = new BookSearchCriteria(null, null, null, null, null, null);
 
     assertThrows(
         InvalidBookException.class, () -> bookService.search(criteria, 0, 101, "title,asc"));
 
-    verify(bookRepository, never()).search(any(), any(), any(), any(), any(), any());
+    verify(bookRepository, never()).search(any(), any(), any(), any(), any(), any(), any());
   }
 
   private static BookRequest validRequest(String isbn) {

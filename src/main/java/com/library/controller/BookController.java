@@ -46,11 +46,13 @@ public class BookController {
       @RequestParam(name = "genre", required = false) String genre,
       @RequestParam(name = "minYear", required = false) Integer minYear,
       @RequestParam(name = "maxYear", required = false) Integer maxYear,
+      @RequestParam(name = "available", required = false) Boolean available,
       @RequestParam(name = "page", defaultValue = "0") int page,
       @RequestParam(name = "size", defaultValue = "20") int size,
       @RequestParam(name = "sort", defaultValue = "title,asc") String sort) {
 
-    BookSearchCriteria criteria = new BookSearchCriteria(keyword, author, genre, minYear, maxYear);
+    BookSearchCriteria criteria =
+        new BookSearchCriteria(keyword, author, genre, minYear, maxYear, available);
     return ResponseEntity.ok(bookService.search(criteria, page, size, sort));
   }
 
