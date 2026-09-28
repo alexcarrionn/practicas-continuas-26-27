@@ -4,6 +4,7 @@ import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
 import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
+import com.library.exception.BookCopiesConflictException;
 import com.library.exception.BookNotFoundException;
 import com.library.exception.DuplicateBookException;
 import com.library.exception.InvalidBookException;
@@ -118,6 +119,30 @@ public class BookServiceImpl implements BookService {
       throw new BookNotFoundException(id);
     }
     bookRepository.deleteById(id);
+  }
+
+  @Override
+  public BookResponse borrow(Long id) {
+    Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
+
+    if (book.getAvailableCopies() <= 0) {
+      throw BookCopiesConflictException.noCopiesAvailable(id);
+    }
+
+    book.setAvailableCopies(book.getAvailableCopies() - 1);
+    return bookMapper.toResponse(bookRepository.save(book));
+  }
+
+  @Override
+  public BookResponse returnBook(Long id) {
+    Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
+
+    if (book.getAvailableCopies() >= book.getCopies()) {
+      throw BookCopiesConflictException.allCopiesReturned(id);
+    }
+
+    book.setAvailableCopies(book.getAvailableCopies() + 1);
+    return bookMapper.toResponse(bookRepository.save(book));
   }
 
   private void ensureUniqueIsbn(String isbn) {

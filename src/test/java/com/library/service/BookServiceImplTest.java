@@ -15,6 +15,7 @@ import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
 import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
+import com.library.exception.BookCopiesConflictException;
 import com.library.exception.BookNotFoundException;
 import com.library.exception.DuplicateBookException;
 import com.library.exception.InvalidBookException;
@@ -298,6 +299,73 @@ class BookServiceImplTest {
         InvalidBookException.class, () -> bookService.search(criteria, 0, 101, "title,asc"));
 
     verify(bookRepository, never()).search(any(), any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void borrow_withAvailableCopies_decrementsAvailableCopies() {
+    Book existing = bookWithCopies(3, 2);
+
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
+    when(bookRepository.save(existing)).thenReturn(existing);
+
+    bookService.borrow(1L);
+
+    assertEquals(1, existing.getAvailableCopies());
+    assertEquals(3, existing.getCopies());
+    verify(bookRepository).save(existing);
+  }
+
+  @Test
+  void borrow_withoutAvailableCopies_throwsConflictAndDoesNotSave() {
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(bookWithCopies(2, 0)));
+
+    assertThrows(BookCopiesConflictException.class, () -> bookService.borrow(1L));
+    verify(bookRepository, never()).save(any());
+  }
+
+  @Test
+  void borrow_withMissingBook_throwsNotFound() {
+    when(bookRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(BookNotFoundException.class, () -> bookService.borrow(99L));
+    verify(bookRepository, never()).save(any());
+  }
+
+  @Test
+  void returnBook_withBorrowedCopies_incrementsAvailableCopies() {
+    Book existing = bookWithCopies(3, 1);
+
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
+    when(bookRepository.save(existing)).thenReturn(existing);
+
+    bookService.returnBook(1L);
+
+    assertEquals(2, existing.getAvailableCopies());
+    assertEquals(3, existing.getCopies());
+    verify(bookRepository).save(existing);
+  }
+
+  @Test
+  void returnBook_withAllCopiesReturned_throwsConflictAndDoesNotSave() {
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(bookWithCopies(2, 2)));
+
+    assertThrows(BookCopiesConflictException.class, () -> bookService.returnBook(1L));
+    verify(bookRepository, never()).save(any());
+  }
+
+  @Test
+  void returnBook_withMissingBook_throwsNotFound() {
+    when(bookRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(BookNotFoundException.class, () -> bookService.returnBook(99L));
+    verify(bookRepository, never()).save(any());
+  }
+
+  private static Book bookWithCopies(int copies, int availableCopies) {
+    Book book = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+    book.setCopies(copies);
+    book.setAvailableCopies(availableCopies);
+    return book;
   }
 
   private static BookRequest validRequest(String isbn) {
