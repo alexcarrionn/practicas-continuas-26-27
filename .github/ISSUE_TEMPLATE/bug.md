@@ -1,3 +1,11 @@
+---
+name: Reporte de error
+about: Crea un reporte para ayudarnos a mejorar
+title: "[BUG] "
+labels: bug
+assignees: ''
+---
+
 ## Descripción del error
 Describe de forma clara y concisa cuál es el problema.
 

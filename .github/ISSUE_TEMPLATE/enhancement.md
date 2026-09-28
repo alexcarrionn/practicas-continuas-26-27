@@ -1,3 +1,11 @@
+---
+name: Mejora / Solicitud de funcionalidad
+about: Sugiere una mejora o una nueva funcionalidad para el proyecto
+title: "[ENHANCEMENT] "
+labels: enhancement
+assignees: ''
+---
+
 ## Resumen
 Describe de forma clara y concisa la mejora que propones.
 
