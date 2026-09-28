@@ -33,6 +33,12 @@ public class GlobalExceptionHandler {
         .body(new ErrorResponse("DUPLICATE_BOOK", ex.getMessage(), LocalDateTime.now()));
   }
 
+  @ExceptionHandler(BookCopiesConflictException.class)
+  public ResponseEntity<ErrorResponse> handleBookCopiesConflict(BookCopiesConflictException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ErrorResponse("BOOK_COPIES_CONFLICT", ex.getMessage(), LocalDateTime.now()));
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ValidationErrorResponse> handleValidationErrors(
       MethodArgumentNotValidException ex) {
