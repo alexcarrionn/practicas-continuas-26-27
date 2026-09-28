@@ -28,35 +28,50 @@ class BookRequestValidationTest {
 
   @Test
   void titleIsRequired() {
-    BookRequest request = new BookRequest("", "Autor", "Novela", null, 2000, 100);
+    BookRequest request = new BookRequest("", "Autor", "Novela", null, 2000, 100, null);
 
     assertFalse(validator.validate(request).isEmpty());
   }
 
   @Test
   void isbnMustHave10Or13DigitsWhenProvided() {
-    BookRequest request = new BookRequest("Libro", "Autor", "Novela", "12345", 2000, 100);
+    BookRequest request = new BookRequest("Libro", "Autor", "Novela", "12345", 2000, 100, null);
 
     assertFalse(validator.validate(request).isEmpty());
   }
 
   @Test
   void pagesMustBePositive() {
-    BookRequest request = new BookRequest("Libro", "Autor", "Novela", null, 2000, 0);
+    BookRequest request = new BookRequest("Libro", "Autor", "Novela", null, 2000, 0, null);
 
     assertFalse(validator.validate(request).isEmpty());
   }
 
   @Test
   void publishedYearMustBeAtLeast1450() {
-    BookRequest request = new BookRequest("Libro", "Autor", "Novela", null, 1449, 100);
+    BookRequest request = new BookRequest("Libro", "Autor", "Novela", null, 1449, 100, null);
 
     assertFalse(validator.validate(request).isEmpty());
   }
 
   @Test
+  void copiesMustBeAtLeastOne() {
+    BookRequest request = new BookRequest("Libro", "Autor", "Novela", null, 2000, 100, 0);
+
+    assertFalse(validator.validate(request).isEmpty());
+  }
+
+  @Test
+  void copiesAreOptional() {
+    BookRequest request = new BookRequest("Libro", "Autor", "Novela", null, 2000, 100, null);
+
+    assertTrue(validator.validate(request).isEmpty());
+  }
+
+  @Test
   void validRequestPassesValidation() {
-    BookRequest request = new BookRequest("Libro", "Autor", "Novela", "1234567890", 2000, 100);
+    BookRequest request =
+        new BookRequest("Libro", "Autor", "Novela", "1234567890", 2000, 100, null);
 
     assertTrue(validator.validate(request).isEmpty());
   }

@@ -7,4 +7,6 @@ public record BookResponse(
     String genre,
     String isbn,
     Integer publishedYear,
-    Integer pages) {}
+    Integer pages,
+    Integer copies,
+    Integer availableCopies) {}

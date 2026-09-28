@@ -106,6 +106,7 @@ public class BookServiceImpl implements BookService {
     book.setIsbn(request.isbn());
     book.setPublishedYear(request.publishedYear());
     book.setPages(request.pages());
+    updateCopies(book, request.copies());
 
     return bookMapper.toResponse(bookRepository.save(book));
   }
@@ -128,6 +129,19 @@ public class BookServiceImpl implements BookService {
     if (isbn != null && !isbn.isBlank() && bookRepository.existsByIsbnAndIdNot(isbn, id)) {
       throw new DuplicateBookException(isbn);
     }
+  }
+
+  private void updateCopies(Book book, Integer copies) {
+    if (copies == null) {
+      return;
+    }
+    int borrowedCopies = book.getCopies() - book.getAvailableCopies();
+    if (copies < borrowedCopies) {
+      throw new InvalidBookException(
+          "El número de ejemplares no puede ser menor que los prestados (" + borrowedCopies + ")");
+    }
+    book.setCopies(copies);
+    book.setAvailableCopies(copies - borrowedCopies);
   }
 
   private void validateBusinessRules(BookRequest request) {

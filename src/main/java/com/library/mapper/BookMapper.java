@@ -8,7 +8,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class BookMapper {
 
+  private static final int DEFAULT_COPIES = 1;
+
   public Book toEntity(BookRequest request) {
+    int copies = request.copies() != null ? request.copies() : DEFAULT_COPIES;
     return Book.builder()
         .title(request.title().trim())
         .author(request.author().trim())
@@ -16,6 +19,8 @@ public class BookMapper {
         .isbn(request.isbn())
         .publishedYear(request.publishedYear())
         .pages(request.pages())
+        .copies(copies)
+        .availableCopies(copies)
         .build();
   }
 
@@ -27,6 +32,8 @@ public class BookMapper {
         book.getGenre(),
         book.getIsbn(),
         book.getPublishedYear(),
-        book.getPages());
+        book.getPages(),
+        book.getCopies(),
+        book.getAvailableCopies());
   }
 }

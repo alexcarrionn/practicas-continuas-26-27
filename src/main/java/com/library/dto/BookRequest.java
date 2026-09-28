@@ -24,4 +24,5 @@ public record BookRequest(
         Integer publishedYear,
     @Min(value = 1, message = "El número de páginas debe ser mayor que 0")
         @Max(value = 10000, message = "El número de páginas no puede superar 10000")
-        Integer pages) {}
+        Integer pages,
+    @Min(value = 1, message = "El número de ejemplares debe ser al menos 1") Integer copies) {}

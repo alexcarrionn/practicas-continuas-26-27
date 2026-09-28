@@ -16,6 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "books")
@@ -59,4 +60,16 @@ public class Book {
   @Max(10000)
   @Column
   private Integer pages;
+
+  @Min(1)
+  @ColumnDefault("1")
+  @Column(nullable = false)
+  @Builder.Default
+  private Integer copies = 1;
+
+  @Min(0)
+  @ColumnDefault("1")
+  @Column(name = "available_copies", nullable = false)
+  @Builder.Default
+  private Integer availableCopies = 1;
 }
