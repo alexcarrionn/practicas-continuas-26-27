@@ -4,6 +4,7 @@ import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
 import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
+import com.library.dto.BookStatsResponse;
 import com.library.service.BookService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -37,6 +38,11 @@ public class BookController {
   @GetMapping
   public ResponseEntity<List<BookResponse>> findAll() {
     return ResponseEntity.ok(bookService.findAll());
+  }
+
+  @GetMapping("/stats")
+  public ResponseEntity<BookStatsResponse> getStats() {
+    return ResponseEntity.ok(bookService.getStats());
   }
 
   @GetMapping("/search")

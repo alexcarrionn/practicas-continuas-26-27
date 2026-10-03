@@ -4,6 +4,7 @@ import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
 import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
+import com.library.dto.BookStatsResponse;
 import java.util.List;
 
 public interface BookService {
@@ -15,6 +16,8 @@ public interface BookService {
   List<BookResponse> findAll();
 
   BookSearchResponse search(BookSearchCriteria criteria, int page, int size, String sort);
+
+  BookStatsResponse getStats();
 
   BookResponse update(Long id, BookRequest request);
 

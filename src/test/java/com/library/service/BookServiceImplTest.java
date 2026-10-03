@@ -2,6 +2,7 @@ package com.library.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,6 +16,7 @@ import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
 import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
+import com.library.dto.BookStatsResponse;
 import com.library.exception.BookNotFoundException;
 import com.library.exception.DuplicateBookException;
 import com.library.exception.InvalidBookException;
@@ -23,6 +25,7 @@ import com.library.model.Book;
 import com.library.repository.BookRepository;
 import java.time.Year;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -141,6 +144,38 @@ class BookServiceImplTest {
     bookService.delete(7L);
 
     verify(bookRepository).deleteById(7L);
+  }
+
+  @Test
+  void getStats_calculatesAggregatedBookData() {
+    List<Book> books =
+        List.of(
+            book(1L, "Dune", "Frank Herbert", "Ciencia ficción", "9780441013593", 1965, 412),
+            book(2L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328),
+            book(
+                3L, "Neuromante", "William Gibson", "Ciencia ficción", "9780441569595", 1984, 318));
+    when(bookRepository.findAll()).thenReturn(books);
+
+    BookStatsResponse result = bookService.getStats();
+
+    assertEquals(3, result.totalBooks());
+    assertEquals(352.6666666666667, result.averagePages(), 0.0000000001);
+    assertEquals(1949, result.oldestPublicationYear());
+    assertEquals(1984, result.newestPublicationYear());
+    assertEquals(Map.of("Ciencia ficción", 2, "Distopía", 1), result.genreCounts());
+  }
+
+  @Test
+  void getStats_withEmptyLibrary_returnsNullAggregates() {
+    when(bookRepository.findAll()).thenReturn(List.of());
+
+    BookStatsResponse result = bookService.getStats();
+
+    assertEquals(0, result.totalBooks());
+    assertNull(result.averagePages());
+    assertNull(result.oldestPublicationYear());
+    assertNull(result.newestPublicationYear());
+    assertEquals(Map.of(), result.genreCounts());
   }
 
   @Test
