@@ -1,21 +1,36 @@
 package com.library.service;
 
+import java.time.Year;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
 import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
+import com.library.dto.RatingRequest;
+import com.library.dto.RatingResponse;
 import com.library.dto.BookStatsResponse;
 import com.library.exception.BookNotFoundException;
 import com.library.exception.DuplicateBookException;
@@ -262,6 +277,44 @@ class BookServiceImplTest {
         InvalidBookException.class, () -> bookService.search(criteria, 0, 101, "title,asc"));
 
     verify(bookRepository, never()).search(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void addRating_updatesAverageAndTotalRatings() {
+    Book book = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+    book.setMediaRating(4.0);
+    book.setTotalRatings(2);
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+    when(bookRepository.save(book)).thenReturn(book);
+
+    RatingResponse result = bookService.addRating(1L, new RatingRequest(5));
+
+    assertEquals(4.333333333333333, result.averageRating());
+    assertEquals(3, result.ratingCount());
+    assertEquals(4.333333333333333, book.getMediaRating());
+    assertEquals(3, book.getTotalRatings());
+    verify(bookRepository).save(book);
+  }
+
+  @Test
+  void addRating_withMissingBook_throwsNotFound() {
+    when(bookRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(BookNotFoundException.class, () -> bookService.addRating(99L, new RatingRequest(5)));
+    verify(bookRepository, never()).save(any());
+  }
+
+  @Test
+  void getRating_returnsCurrentAverageAndTotalRatings() {
+    Book book = book(1L, "1984", "George Orwell", "Distopía", "9780451524935", 1949, 328);
+    book.setMediaRating(4.3);
+    book.setTotalRatings(25);
+    when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+
+    RatingResponse result = bookService.getRating(1L);
+
+    assertEquals(4.3, result.averageRating());
+    assertEquals(25, result.ratingCount());
   }
 
   private static BookRequest validRequest(String isbn) {

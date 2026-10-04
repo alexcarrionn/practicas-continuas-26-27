@@ -59,4 +59,12 @@ public class Book {
   @Max(10000)
   @Column
   private Integer pages;
+  
+  @Column(nullable = false)
+  @Builder.Default
+  private Double mediaRating = 0.0;
+
+  @Column(nullable = false)
+  @Builder.Default
+  private Integer totalRatings = 0;
 }
