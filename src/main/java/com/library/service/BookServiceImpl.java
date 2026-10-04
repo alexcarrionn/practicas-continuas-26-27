@@ -17,12 +17,25 @@ import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
 import com.library.dto.RatingRequest;
 import com.library.dto.RatingResponse;
+import com.library.dto.BookStatsResponse;
 import com.library.exception.BookNotFoundException;
 import com.library.exception.DuplicateBookException;
 import com.library.exception.InvalidBookException;
 import com.library.mapper.BookMapper;
 import com.library.model.Book;
 import com.library.repository.BookRepository;
+import java.time.Year;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -61,6 +74,50 @@ public class BookServiceImpl implements BookService {
   @Transactional(readOnly = true)
   public List<BookResponse> findAll() {
     return bookRepository.findAll().stream().map(bookMapper::toResponse).toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public BookStatsResponse getStats() {
+    List<Book> books = bookRepository.findAll();
+
+    if (books.isEmpty()) {
+      return new BookStatsResponse(0, null, null, null, Map.of());
+    }
+
+    Double averagePages =
+        books.stream()
+            .map(Book::getPages)
+            .filter(Objects::nonNull)
+            .mapToInt(Integer::intValue)
+            .average()
+            .stream()
+            .boxed()
+            .findFirst()
+            .orElse(null);
+
+    Integer oldestPublicationYear =
+        books.stream()
+            .map(Book::getPublishedYear)
+            .filter(Objects::nonNull)
+            .min(Integer::compareTo)
+            .orElse(null);
+
+    Integer newestPublicationYear =
+        books.stream()
+            .map(Book::getPublishedYear)
+            .filter(Objects::nonNull)
+            .max(Integer::compareTo)
+            .orElse(null);
+
+    Map<String, Integer> genreCounts =
+        books.stream()
+            .map(Book::getGenre)
+            .filter(Objects::nonNull)
+            .collect(Collectors.groupingBy(genre -> genre, Collectors.summingInt(genre -> 1)));
+
+    return new BookStatsResponse(
+        books.size(), averagePages, oldestPublicationYear, newestPublicationYear, genreCounts);
   }
 
   @Override
