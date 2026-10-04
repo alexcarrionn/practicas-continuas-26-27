@@ -72,4 +72,12 @@ public class Book {
   @Column(name = "available_copies", nullable = false)
   @Builder.Default
   private Integer availableCopies = 1;
+  
+  @Column(nullable = false)
+  @Builder.Default
+  private Double mediaRating = 0.0;
+
+  @Column(nullable = false)
+  @Builder.Default
+  private Integer totalRatings = 0;
 }

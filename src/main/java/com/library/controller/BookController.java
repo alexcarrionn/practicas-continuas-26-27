@@ -4,9 +4,11 @@ import com.library.dto.BookRequest;
 import com.library.dto.BookResponse;
 import com.library.dto.BookSearchCriteria;
 import com.library.dto.BookSearchResponse;
+import com.library.dto.BookStatsResponse;
 import com.library.service.BookService;
 import jakarta.validation.Valid;
 import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +20,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.library.dto.BookRequest;
+import com.library.dto.BookResponse;
+import com.library.dto.BookSearchCriteria;
+import com.library.dto.BookSearchResponse;
+import com.library.dto.RatingRequest;
+import com.library.dto.RatingResponse;
+import com.library.service.BookService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/books")
@@ -39,6 +51,11 @@ public class BookController {
     return ResponseEntity.ok(bookService.findAll());
   }
 
+  @GetMapping("/stats")
+  public ResponseEntity<BookStatsResponse> getStats() {
+    return ResponseEntity.ok(bookService.getStats());
+  }
+
   @GetMapping("/search")
   public ResponseEntity<BookSearchResponse> search(
       @RequestParam(name = "keyword", required = false) String keyword,
@@ -54,6 +71,17 @@ public class BookController {
     BookSearchCriteria criteria =
         new BookSearchCriteria(keyword, author, genre, minYear, maxYear, available);
     return ResponseEntity.ok(bookService.search(criteria, page, size, sort));
+  }
+  
+  @PostMapping("/{id}/ratings")
+  public ResponseEntity<RatingResponse> addRating(
+      @PathVariable Long id, @RequestBody @Valid RatingRequest request) {
+    return ResponseEntity.ok(bookService.addRating(id, request));
+  }
+
+  @GetMapping("/{id}/ratings")
+  public ResponseEntity<RatingResponse> getRating(@PathVariable Long id) {
+    return ResponseEntity.ok(bookService.getRating(id));
   }
 
   @GetMapping("/{id}")

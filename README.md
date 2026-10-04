@@ -89,4 +89,4 @@ La respuesta de búsqueda usa un DTO propio para mantener estable el contrato JS
 Para que lance el hook de formateo automático debes ejecutar el siguiente comando:
 ```bash
 git config core.hooksPath .githooks
-```
+```prueba
